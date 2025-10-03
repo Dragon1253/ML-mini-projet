@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Prediction API</title>
+</head>
+<body>
+    <h1>Test Prediction API</h1>
+    <button onclick="testPrediction()">Test Prediction</button>
+    <div id="result"></div>
+
+    <script>
+        function testPrediction() {
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    latitude: 40.7589,
+                    longitude: -73.9851
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.text();
+            })
+            .then(text => {
+                console.log('Response text:', text);
+                document.getElementById('result').innerHTML = '<pre>' + text + '</pre>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>
