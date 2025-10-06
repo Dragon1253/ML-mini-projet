@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Uber Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <style>
+        #map {
+            height: 600px; /* Set map height */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="my-4 text-center">Uber Dashboard</h1>
+        
+        <!-- Form for calling Uber -->
+        <form id="uberForm" method="POST" action="/calculate_fare">
+            <div class="row">
+                <div class="col-12">
+                    <h3>Map</h3>
+                    <div id="map"></div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h3>Instructions</h3>
+                    <ul>
+                        <li>Double-click on the map to set the starting point (first click) and destination point (second click).</li>
+                        <li>Click "Edit" in the popup to move a marker. Drag the marker to a new location.</li>
+                        <li>Click "Delete" in the popup to remove a marker and the associated route.</li>
+                        <li>Your current location is shown as a blue circle on the map.</li>
+                    </ul>
+                </div>
+
+                <div class="col-12">
+                    <h3>Passenger Count</h3>
+                    <input id="passenger_count" name="passenger_count" type="number" value="1" min="1" max="6" style="width: 100%; height: 40px; border: 1px solid #ccc; padding: 10px;">
+                </div>
+            </div>
+
+            <!-- Hidden Inputs -->
+            <input type="hidden" id="distance_km" name="distance_km" value="0">
+            <input type="hidden" id="pickup_day" name="pickup_day" value="">
+            <input type="hidden" id="pickup_hour" name="pickup_hour" value="">
+            <input type="hidden" id="is_weekend" name="is_weekend" value="0">
+            <input type="hidden" id="season_winter" name="season_winter" value="0">
+            <input type="hidden" id="season_spring" name="season_spring" value="0">
+            <input type="hidden" id="season_summer" name="season_summer" value="0">
+            <input type="hidden" id="season_autumn" name="season_autumn" value="0">
+            <input type="hidden" id="pickup_longitude" name="pickup_longitude" value="">
+            <input type="hidden" id="pickup_latitude" name="pickup_latitude" value="">
+            <input type="hidden" id="dropoff_longitude" name="dropoff_longitude" value="">
+            <input type="hidden" id="dropoff_latitude" name="dropoff_latitude" value="">
+            <input type="hidden" id="day_of_week" name="day_of_week" value="">
+            <input type="hidden" id="month" name="month" value="">
+            <input type="hidden" id="pickup_minute" name="pickup_minute" value="">
+
+
+            <button type="submit" style="width: 100%; height: 40px; margin-top: 20px;" id="callUberButton">Call Uber</button>
+        </form>
+
+        <!-- Area to display the fare amount -->
+        <div id="fareResult" style="margin-top: 20px; font-size: 24px; text-align: center;"></div>
+        <div id="fareResultClassification" style="margin-top: 20px; font-size: 24px; text-align: center;"></div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([37.7749, -122.4194], 13); // Default to San Francisco
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var userLocationMarker;
+        var startMarker, endMarker;
+        var routingControl;
+
+        // Function to get user's location
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var userLat = position.coords.latitude;
+                        var userLng = position.coords.longitude;
+
+                        // Center the map on user's location
+                        map.setView([userLat, userLng], 13);
+
+                        // Add a blue circle for user's location
+                        if (userLocationMarker) {
+                            userLocationMarker.setLatLng([userLat, userLng]);
+                        } else {
+                            userLocationMarker = L.circleMarker([userLat, userLng], {
+                                radius: 10,
+                                fillColor: "#00f",
+                                color: "#00f",
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.5
+                            }).addTo(map).bindPopup('You are here').openPopup();
+                        }
+                    },
+                    function() {
+                        alert("Geolocation service failed.");
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // Call the function to get user location on map load
+        getUserLocation();
+
+        // Set pickup day and hour
+        var currentDate = new Date();
+        document.getElementById('pickup_day').value = currentDate.getDate();
+        document.getElementById('pickup_hour').value = currentDate.getHours();
+        document.getElementById('is_weekend').value = (currentDate.getDay() === 0 || currentDate.getDay() === 6) ? 1 : 0;
+        document.getElementById('month').value = currentDate.getMonth() + 1; // Adjusted for 1-based index
+        document.getElementById('day_of_week').value = (currentDate.getDay() === 0) ? 7 : currentDate.getDay(); 
+        document.getElementById('pickup_minute').value = currentDate.getMinutes();
+        // Determine season
+        var month = currentDate.getMonth();
+        if (month === 11 || month === 0 || month === 1) { // December, January, February
+            document.getElementById('season_winter').value = 1;
+        } else if (month >= 2 && month <= 4) { // March, April, May
+            document.getElementById('season_spring').value = 1;
+        } else if (month >= 5 && month <= 7) { // June, July, August
+            document.getElementById('season_summer').value = 1;
+        } else { // September, October, November
+            document.getElementById('season_autumn').value = 1;
+        }
+
+        // Add double click event to the map
+        map.on('dblclick', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (!startMarker) {
+                // Set start marker
+                startMarker = createMarker(lat, lng, 'Starting Point');
+                document.getElementById('pickup_latitude').value = lat;
+                document.getElementById('pickup_longitude').value = lng;
+                console.log("Start:", lat, lng);
+            } else if (!endMarker) {
+                // Set end marker
+                endMarker = createMarker(lat, lng, 'Destination Point');
+                document.getElementById('dropoff_latitude').value = lat;
+                document.getElementById('dropoff_longitude').value = lng;
+                console.log("End:", lat, lng);
+
+                // Draw route between markers
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                }
+
+                // Use leaflet routing machine to get the route
+                routingControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(startMarker.getLatLng().lat, startMarker.getLatLng().lng),
+                        L.latLng(endMarker.getLatLng().lat, endMarker.getLatLng().lng)
+                    ],
+                    router: L.Routing.osrmv1({
+                        serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    }),
+                    routeWhileDragging: true
+                }).addTo(map);
+
+                // Calculate distance and update hidden input
+                routingControl.on('routesfound', function(e) {
+                    var distance = e.routes[0].summary.totalDistance / 1000; // Convert to kilometers
+                    document.getElementById('distance_km').value = distance.toFixed(2); // Set distance to hidden input
+                });
+            }
+        });
+
+        // Function to create or update markers with edit/delete options
+        function createMarker(lat, lng, type) {
+            var marker;
+            if (type === 'Starting Point') {
+                if (startMarker) {
+                    startMarker.setLatLng([lat, lng]);
+                    marker = startMarker;
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                    startMarker = marker;
+                }
+            } else {
+                if (endMarker) {
+                    endMarker.setLatLng([lat, lng]);
+                    marker = endMarker;
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                    endMarker = marker;
+                }
+            }
+
+            marker.bindPopup(type + '<br><button class="edit-btn">Edit</button><button class="delete-btn">Delete</button>').openPopup();
+
+            marker.on('popupopen', function() {
+                $('.edit-btn').off().on('click', function() {
+                    marker.dragging.enable();
+                    marker.bindPopup(type + ' (Drag to move)<br><button class="delete-btn">Delete</button>').openPopup();
+                });
+
+                $('.delete-btn').off().on('click', function() {
+                    map.removeLayer(marker);
+                    if (type === 'Starting Point') {
+                        startMarker = null;
+                    } else {
+                        endMarker = null;
+                    }
+                    if (routingControl) {
+                        map.removeControl(routingControl);
+                    }
+                    marker.closePopup();
+                });
+            });
+
+            return marker;
+        }
+
+        // Handle form submission
+        $('#uberForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+          $.ajax({
+                url: '/calculate_fare',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    console.log("Response:", response); // Log the response for debugging
+                    $('#fareResult').text('Estimated Fare: $' + response.fare_amount.toFixed(2));
+
+                    let text; // Declare the variable
+
+                    // Determine fare classification text based on response
+                    if (response.fare_amount_classification == 0) {
+                        text = 'LOW';
+                    } else if (response.fare_amount_classification == 1) {
+                        text = 'Normal';
+                    } else if (response.fare_amount_classification == 2) {
+                        text = 'High';
+                    } else {
+                        text = 'Unknown'; // Fallback option if classification is not recognized
+                    }
+
+                    $('#fareResultClassification').text('Fare Classification: ' + text);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error:", error); // Log the error for debugging
+                    $('#fareResult').text('Error calculating fare. Please try again.');
+                    $('#fareResultClassification').text('Error Classification. Please try again.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

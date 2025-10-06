@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Title -->
+    <title>Uber Analytics Dashboard | Intelligent Transportation Insights</title>
+    
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="author" content="Uber Analytics Team">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <meta name="keywords" content="uber analytics, transportation data, cluster analysis, ride sharing insights, ML clustering, urban mobility, data visualization, predictive analytics">
+    
+    <meta name="description" content="Advanced Uber Analytics Dashboard featuring ML-powered cluster analysis, interactive maps, economic insights, and comprehensive ride-sharing data visualization.">
+    
+    <meta property="og:title" content="Uber Analytics Dashboard | Intelligent Transportation Insights">
+    <meta property="og:description" content="Professional Uber Analytics Dashboard with ML clustering, interactive visualizations, and comprehensive ride-sharing insights.">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- Mobile Specific -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- FAVICONS ICON - Temporairement désactivé -->
+    
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <!-- Leaflet for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom Stylesheet -->
+    <link href="{{ url_for('static', filename='style1.css') }}" rel="stylesheet">
+    
+    <!-- Custom table styling -->
+    <style>
+        .cluster-table {
+            background: rgba(26, 29, 41, 0.95); /* Changé de rgba(255, 255, 255, 0.02) à un fond sombre */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .cluster-table thead.table-dark th {
+            background: linear-gradient(135deg, #1a1d29 0%, #252943 100%);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1rem 0.75rem;
+            border: none;
+            text-transform: uppercase;
+        }
+        
+        .cluster-table tbody tr {
+            background: rgba(26, 29, 41, 0.8); /* Changé pour un fond sombre */
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .cluster-table tbody tr:hover {
+            background: rgba(250, 112, 154, 0.2); /* Augmenté l'opacité pour plus de visibilité */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(250, 112, 154, 0.3);
+        }
+        
+        .cluster-table tbody td {
+            padding: 1rem 0.75rem;
+            border: none;
+            color: #ffffff; /* Changé de #b8bcc8 à blanc pour plus de contraste */
+            font-weight: 500;
+            text-align: center;
+            vertical-align: middle;
+            background: rgba(26, 29, 41, 0.9); /* Ajouté un fond sombre spécifique aux cellules */
+        }
+        
+        .cluster-indicator {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        
+        .cluster-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #ffffff;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .revenue-cell {
+            font-weight: 700;
+            color: #58d68d !important; /* Ajouté !important pour forcer la couleur */
+            font-size: 1.1rem;
+            background: rgba(88, 214, 141, 0.1) !important; /* Fond légèrement coloré */
+        }
+        
+        .trips-cell {
+            font-weight: 700;
+            color: #3498db !important;
+            font-size: 1.05rem;
+            background: rgba(52, 152, 219, 0.1) !important;
+        }
+        
+        .passengers-cell {
+            color: #f39c12 !important;
+            font-weight: 600;
+            background: rgba(243, 156, 18, 0.1) !important;
+        }
+        
+        .time-cell {
+            color: #e74c3c !important;
+            font-weight: 600;
+            background: rgba(231, 76, 60, 0.1) !important;
+        }
+        
+        .day-cell {
+            color: #9b59b6 !important;
+            font-weight: 600;
+            background: rgba(155, 89, 182, 0.1) !important;
+        }
+
+        /* Ajout d'un style pour le conteneur du tableau */
+        .table-responsive {
+            background: rgba(26, 29, 41, 0.95);
+            border-radius: 12px;
+            padding: 0;
+        }
+
+        /* Style pour les cellules de chargement */
+        .loading-row td {
+            background: rgba(26, 29, 41, 0.9) !important;
+            color: #b8bcc8 !important;
+        }
+        
+        /* Navigation fixes */
+        .dlabnav {
+            position: fixed !important;
+            top: 80px; /* Start after nav-header */
+            left: 0;
+            height: calc(100vh - 80px);
+            z-index: 1000;
+            overflow-y: auto;
+            width: 280px;
+            background: rgba(26, 29, 41, 0.95);
+            backdrop-filter: blur(20px);
+        }
+        
+        .header {
+            position: fixed !important;
+            top: 0;
+            right: 0;
+            left: 280px; /* Width of sidebar */
+            z-index: 1050;
+            background: rgba(26, 29, 41, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        
+        .content-body {
+            margin-top: 80px; /* Height of header */
+            margin-left: 280px; /* Width of sidebar */
+            min-height: calc(100vh - 80px);
+            padding: 0;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1199.98px) {
+            .header {
+                left: 0;
+            }
+            .content-body {
+                margin-left: 0;
+            }
+            .nav-header {
+                width: 100%;
+            }
+            .dlabnav {
+                width: 100%;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .header-title h3 {
+                font-size: 1.25rem;
+            }
+            .header-title p {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 1rem;
+            }
+            .header-title h3 {
+                font-size: 1rem;
+            }
+            .navbar-nav {
+                gap: 0.5rem;
+            }
+            .navbar-nav .nav-link {
+                padding: 0.25rem;
+            }
+        }
+        
+        /* Sidebar improvements */
+        .dlabnav .metismenu {
+            padding-top: 1rem;
+        }
+        
+        .nav-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            z-index: 1051;
+            background: rgba(26, 29, 41, 0.98);
+            backdrop-filter: blur(20px);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            box-sizing: border-box;
+        }
+        
+        /* Header user dropdown improvements */
+        .navbar-nav .nav-link.dropdown-toggle::after {
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        /* Header content alignment */
+        .header-content {
+            padding: 0 2rem;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        
+        .navbar-expand {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .navbar-collapse {
+            height: 100%;
+            align-items: center;
+        }
+        
+        .navbar-nav {
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+        }
+        
+        /* Header title */
+        .header-title {
+            flex: 1;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header-title h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header-title p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+        
+        /* Ensure user dropdown is always visible */
+        .navbar-nav .nav-item {
+            position: relative;
+        }
+        
+        .navbar-nav .dropdown-menu {
+            z-index: 1060;
+        }
+        
+        /* Better container alignment */
+        .container-fluid {
+            padding: 1.5rem;
+            max-width: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!--**********************************
+        Main wrapper start
+    ***********************************-->
+    <div id="main-wrapper">
+        <!--**********************************
+            Nav header start
+        ***********************************-->
+        <div class="nav-header">
+            <div class="nav-control">
+                <div class="hamburger">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+            </div>
+        </div>
+        <!--**********************************
+            Nav header end
+        ***********************************-->
+		
+        <!--**********************************
+            Header start
+        ***********************************-->
+        <div class="header">
+            <div class="header-content">
+                <nav class="navbar navbar-expand">
+                    <div class="collapse navbar-collapse justify-content-between">
+                        <!-- Titre à gauche -->
+                        <div class="header-title">
+                            <h3>
+                                <i class="fas fa-car" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                                Uber Analytics Dashboard
+                            </h3>
+                            <p>Intelligent clustering analysis and transportation insights powered by ML</p>
+                        </div>
+                        
+                        <!-- Utilisateur à droite -->
+                        <ul class="navbar-nav header-right">
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0);" style="color: var(--text-secondary);">
+                                    <i class="fas fa-bell" style="font-size: 1.2rem;"></i>
+                                    <span class="badge badge-danger" style="position: absolute; top: 8px; right: 8px; font-size: 0.6rem;">3</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="javascript:void(0);" style="color: var(--text-secondary);">
+                                    <i class="fas fa-cog" style="font-size: 1.2rem;"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" style="color: var(--text-primary); padding: 0.5rem;">
+                                    <div class="avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #000000 0%, #434343 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="d-none d-md-block">
+                                        <div style="font-size: 0.875rem; font-weight: 600; line-height: 1.2;">Transportation Analyst</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.2;">Uber Analytics Team</div>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);">
+                                    <li><a class="dropdown-item" href="#" style="color: var(--text-primary);"><i class="fas fa-user me-2"></i>Profile</a></li>
+                                    <li><a class="dropdown-item" href="#" style="color: var(--text-primary);"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                                    <li><hr class="dropdown-divider" style="border-color: var(--glass-border);"></li>
+                                    <li><a class="dropdown-item" href="#" style="color: #fa709a;"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <!--**********************************
+            Header end
+        ***********************************-->
+
+        <!--**********************************
+            Sidebar start
+        ***********************************-->
+        <div class="dlabnav">
+            <div class="dlabnav-scroll">
+                <ul class="metismenu" id="menu">
+                    <li>
+                        <a href="#dashboard-overview" class="active">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span class="nav-text">Dashboard Overview</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#interactive-map" >
+                            <i class="fas fa-map-marked-alt"></i>
+                            <span class="nav-text">Interactive Cluster Map</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#economic-analysis">
+                            <i class="fas fa-chart-pie"></i>
+                            <span class="nav-text">Economic Analysis</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#temporal-analysis">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="nav-text">Temporal Analysis</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#heatmap-section">
+                            <i class="fas fa-fire"></i>
+                            <span class="nav-text">Activity Heatmap</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#cluster-insights">
+                            <i class="fas fa-lightbulb"></i>
+                            <span class="nav-text">AI Insights</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#cluster-summary">
+                            <i class="fas fa-table"></i>
+                            <span class="nav-text">Cluster Summary</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#prediction-tool">
+                            <i class="fas fa-brain"></i>
+                            <span class="nav-text">Cluster Prediction</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#filters-panel">
+                            <i class="fas fa-filter"></i>
+                            <span class="nav-text">Filters & Controls</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Cluster Legend -->
+                <div class="cluster-legend mt-4 p-3" style="background: var(--glass-bg); border-radius: 12px; margin: 0 15px;">
+                    <h6 style="color: var(--text-primary); margin-bottom: 15px;">
+                        <i class="fas fa-info-circle me-2"></i>Cluster Legend
+                    </h6>
+                    <div id="cluster-legend-content">
+                        <!-- Sera rempli par JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+                            <i class="fas fa-cog"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+
+
+                <!-- Support Section -->
+                <div class="sidebar-support" style="padding: 4rem; margin-top: 2rem; text-align: center;">
+                    <div style="background: var(--primary-gradient); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                        <i class="fas fa-headset" style="color: white; font-size: 1.5rem;"></i>
+                    </div>
+                    <h6 style="color: var(--text-primary); margin-bottom: 0.5rem; font-weight: 600;">Need Help?</h6>
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Get support for your ML projects</p>
+                    <button class="btn btn-primary btn-sm">Contact Support</button>
+                </div>
+            </div>
+        </div>
+        <!--**********************************
+            Sidebar end
+        ***********************************-->
+
+        <!--**********************************
+            Content body start
+        ***********************************-->
+        <div class="content-body">
+            <div class="container-fluid">
+                <!-- Page Header -->
+                <div class="row mb-4" id="dashboard-overview">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <div class="d-flex gap-2" id="filters-panel">
+                                <div class="dropdown">
+                                    <button class="btn" style="background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border);" data-bs-toggle="dropdown">
+                                        <i class="fas fa-clock me-2"></i><span id="hour-filter-text">All Hours</span>
+                                    </button>
+                                    <ul class="dropdown-menu" id="hour-filter">
+                                        <li><a class="dropdown-item" href="#" data-hour="">All Hours</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <!-- Hours will be populated by JavaScript -->
+                                    </ul>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn" style="background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border);" data-bs-toggle="dropdown">
+                                        <i class="fas fa-calendar-day me-2"></i><span id="day-filter-text">All Days</span>
+                                    </button>
+                                    <ul class="dropdown-menu" id="day-filter">
+                                        <li><a class="dropdown-item" href="#" data-day="">All Days</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" data-day="0">Monday</a></li>
+                                        <li><a class="dropdown-item" href="#" data-day="1">Tuesday</a></li>
+                                        <li><a class="dropdown-item" href="#" data-day="2">Wednesday</a></li>
+                                        <li><a class="dropdown-item" href="#" data-day="3">Thursday</a></li>
+                                        <li><a class="dropdown-item" href="#" data-day="4">Friday</a></li>
+                                        <li><a class="dropdown-item" href="#" data-day="5">Saturday</a></li>
+                                        <li><a class="dropdown-item" href="#" data-day="6">Sunday</a></li>
+                                    </ul>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn" style="background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border);" data-bs-toggle="dropdown">
+                                        <i class="fas fa-leaf me-2"></i><span id="season-filter-text">All Seasons</span>
+                                    </button>
+                                    <ul class="dropdown-menu" id="season-filter">
+                                        <li><a class="dropdown-item" href="#" data-season="">All Seasons</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" data-season="spring">Spring</a></li>
+                                        <li><a class="dropdown-item" href="#" data-season="summer">Summer</a></li>
+                                        <li><a class="dropdown-item" href="#" data-season="autumn">Fall</a></li>
+                                        <li><a class="dropdown-item" href="#" data-season="winter">Winter</a></li>
+                                    </ul>
+                                </div>
+                                <button class="btn btn-primary" onclick="applyFilters()">
+                                    <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Metrics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+                        <div class="card stats-card animate-fade-in-up" style="animation-delay: 0.1s;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <div class="stats-number" id="total-trips">0</div>
+                                        <div class="stats-label">Total Trips</div>
+                                        <div class="stats-change" id="trips-change">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>Analyzing...</span>
+                                        </div>
+                                    </div>
+                                    <div class="stats-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                        <i class="fas fa-route"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+                        <div class="card stats-card animate-fade-in-up" style="animation-delay: 0.2s;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <div class="stats-number" id="total-revenue">$0</div>
+                                        <div class="stats-label">Total Revenue</div>
+                                        <div class="stats-change" id="revenue-change">
+                                            <i class="fas fa-dollar-sign"></i>
+                                            <span>Calculating...</span>
+                                        </div>
+                                    </div>
+                                    <div class="stats-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+                        <div class="card stats-card animate-fade-in-up" style="animation-delay: 0.3s;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <div class="stats-number" id="active-clusters">0</div>
+                                        <div class="stats-label">Active Clusters</div>
+                                        <div class="stats-change" id="clusters-change">
+                                            <i class="fas fa-project-diagram"></i>
+                                            <span>ML Detected</span>
+                                        </div>
+                                    </div>
+                                    <div class="stats-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                                        <i class="fas fa-sitemap"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+                        <div class="card stats-card animate-fade-in-up" style="animation-delay: 0.4s;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <div class="stats-number" id="avg-passengers">0.0</div>
+                                        <div class="stats-label">Avg Passengers</div>
+                                        <div class="stats-change" id="passengers-change">
+                                            <i class="fas fa-users"></i>
+                                            <span>Per Trip</span>
+                                        </div>
+                                    </div>
+                                    <div class="stats-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                                        <i class="fas fa-user-friends"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Map Section -->
+                <div class="row mb-4" id="interactive-map">
+                    <div class="col-12">
+                        <div class="card animate-slide-in-right" style="animation-delay: 0.5s;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="card-title">
+                                            <i class="fas fa-map-marked-alt me-2"></i>Interactive Cluster Map
+                                        </h4>
+                                        <p class="card-subtitle">Geographic distribution of Uber rides by ML-detected clusters</p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm" style="background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border);" onclick="toggleClusters()">
+                                            <i class="fas fa-eye me-2"></i>Toggle All
+                                        </button>
+                                        <button class="btn btn-sm btn-primary" onclick="refreshMap()">
+                                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="uber-map" style="height: 500px; width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Economic Analysis & Temporal Analysis -->
+                <div class="row mb-4">
+                    <div class="col-xl-6 mb-3" id="economic-analysis">
+                        <div class="card animate-slide-in-left" style="animation-delay: 0.6s;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="card-title">
+                                            <i class="fas fa-chart-pie me-2"></i>Economic Analysis
+                                        </h4>
+                                        <p class="card-subtitle">Revenue distribution by cluster</p>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary" onclick="updateEconomicAnalysis()">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="economicChart" height="300"></canvas>
+                                </div>
+                                <div class="mt-3" id="economic-legend">
+                                    <!-- Economic analysis legend will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6 mb-3" id="temporal-analysis">
+                        <div class="card animate-slide-in-right" style="animation-delay: 0.7s;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="card-title">
+                                            <i class="fas fa-chart-line me-2"></i>Temporal Analysis
+                                        </h4>
+                                        <p class="card-subtitle">Trips evolution throughout the day by cluster</p>
+                                    </div>
+                                    <div class="cluster-toggle-container" id="cluster-toggles">
+                                        <!-- Cluster visibility toggles will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="temporalChart" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heatmap & AI Insights Section -->
+                <div class="row mb-4">
+                    <div class="col-xl-8 mb-3" id="heatmap-section">
+                        <div class="card animate-fade-in-up" style="animation-delay: 0.8s;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="card-title">
+                                            <i class="fas fa-fire me-2"></i>Activity Heatmap
+                                        </h4>
+                                        <p class="card-subtitle">Trip intensity by cluster and hour</p>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary" onclick="updateHeatmap()">
+                                        <i class="fas fa-sync-alt me-2"></i>Update
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-wrapper">
+                                    <canvas id="heatmapChart" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 mb-3" id="cluster-insights">
+                        <div class="card animate-fade-in-up" style="animation-delay: 0.9s;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="card-title">
+                                            <i class="fas fa-lightbulb me-2"></i>AI Insights
+                                        </h4>
+                                        <p class="card-subtitle">Automated data insights</p>
+                                    </div>
+                                    <button class="btn btn-sm btn-primary" onclick="refreshInsights()">
+                                        <i class="fas fa-brain me-2"></i>Generate
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="insights-container">
+                                    <div class="insight-loading d-flex justify-content-center align-items-center" style="height: 200px;">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading insights...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cluster Summary Table & Prediction Tool -->
+                <div class="row">
+                    <div class="col-xl-8 mb-3" id="cluster-summary">
+                        <div class="card table-container animate-fade-in-up" style="animation-delay: 1.0s;">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="card-title">
+                                            <i class="fas fa-table me-2"></i>Cluster Summary
+                                        </h4>
+                                        <p class="card-subtitle">Comprehensive cluster performance metrics</p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm" style="background: var(--glass-bg); color: var(--text-primary); border: 1px solid var(--glass-border);" onclick="exportClusterData()">
+                                            <i class="fas fa-download me-2"></i>Export
+                                        </button>
+                                        <button class="btn btn-sm btn-primary" onclick="refreshClusterSummary()">
+                                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped cluster-table" id="cluster-summary-table">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th class="text-center">
+                                                    <i class="fas fa-layer-group me-2"></i>CLUSTER
+                                                </th>
+                                                <th class="text-center">
+                                                    <i class="fas fa-route me-2"></i>TRAJETS
+                                                </th>
+                                                <th class="text-center">
+                                                    <i class="fas fa-dollar-sign me-2"></i>REVENU MOY.
+                                                </th>
+                                                <th class="text-center">
+                                                    <i class="fas fa-users me-2"></i>PASSAGERS MOY.
+                                                </th>
+                                                <th class="text-center">
+                                                    <i class="fas fa-clock me-2"></i>HEURE PEAK
+                                                </th>
+                                                <th class="text-center">
+                                                    <i class="fas fa-calendar me-2"></i>JOUR ACTIF
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cluster-summary-tbody">
+                                            <tr class="loading-row">
+                                                <td colspan="6" class="text-center" style="padding: 2rem;">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                                            <span class="visually-hidden">Loading cluster data...</span>
+                                                        </div>
+                                                        <h6 class="text-muted">
+                                                            <i class="fas fa-chart-line me-2"></i>
+                                                            Chargement des données de clusters...
+                                                        </h6>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 mb-3" id="prediction-tool">
+                        <div class="card animate-fade-in-up" style="animation-delay: 1.1s;">
+                            <div class="card-header">
+                                <h4 class="card-title">
+                                    <i class="fas fa-brain me-2"></i>Cluster Prediction
+                                </h4>
+                                <p class="card-subtitle">Predict cluster for any location</p>
+                            </div>
+                            <div class="card-body">
+                                <form id="prediction-form">
+                                    <div class="mb-3">
+                                        <label for="lat-input" class="form-label">Latitude</label>
+                                        <input type="number" class="form-control" id="lat-input" step="0.000001" placeholder="40.7128" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="lng-input" class="form-label">Longitude</label>
+                                        <input type="number" class="form-control" id="lng-input" step="0.000001" placeholder="-74.0060" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                                        <i class="fas fa-search-location me-2"></i>Predict Cluster
+                                    </button>
+                                </form>
+                                
+                                <div id="prediction-result" style="display: none;">
+                                    <div class="alert alert-success">
+                                        <h6><i class="fas fa-map-marker-alt me-2"></i>Prediction Result</h6>
+                                        <p class="mb-2">Location will belong to:</p>
+                                        <div class="d-flex align-items-center">
+                                            <div id="predicted-cluster-color" class="me-2" style="width: 20px; height: 20px; border-radius: 50%;"></div>
+                                            <strong>Cluster <span id="predicted-cluster-id"></span></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <h6 style="color: var(--text-primary); margin-bottom: 15px;">
+                                        <i class="fas fa-map me-2"></i>Quick Locations
+                                    </h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="predictLocation(40.7589, -73.9851)">
+                                            Times Square
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="predictLocation(40.6892, -74.0445)">
+                                            Statue of Liberty
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="predictLocation(40.7505, -73.9934)">
+                                            Empire State Building
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--**********************************
+            Content body end
+        ***********************************-->
+
+        <!--**********************************
+			Footer start
+		***********************************-->
+		<div class="footer">
+			
+		</div>
+		<!--**********************************
+			Footer end
+		***********************************-->
+        <!--**********************************
+           Support ticket button start
+        ***********************************-->
+
+        <!--**********************************
+           Support ticket button end
+        ***********************************-->
+    </div>
+    <!--**********************************
+        Main wrapper end
+    ***********************************-->
+
+    <!--**********************************
+        Scripts
+    ***********************************-->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Uber Analytics Dashboard Scripts -->
+    <script>
+        // Global variables
+        let map;
+        let clusterLayers = {};
+        let clusterData = [];
+        let economicChart, temporalChart, heatmapChart;
+        let currentFilters = { hour: '', day: '', season: '' };
+
+        // Cluster colors for consistent visualization
+        const clusterColors = [
+            '#667eea', '#43e97b', '#fa709a', '#4facfe', '#fee140',
+            '#764ba2', '#38f9d7', '#f093fb', '#00f2fe', '#ffecd2'
+        ];
+
+        // Initialize dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            loadInitialData();
+            setupEventListeners();
+            populateHourFilter();
+        });
+
+        // Initialize Leaflet map
+        function initializeMap() {
+            map = L.map('uber-map').setView([40.7589, -73.9851], 11); // NYC center
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Load initial data from API
+        function loadInitialData() {
+            console.log('Loading initial data...');
+            Promise.all([
+                fetch('/api/clusters-data'),
+                fetch('/api/cluster-summary'),
+                fetch('/api/insights'),
+                fetch('/api/economic-analysis'),
+                fetch('/api/temporal-analysis'),
+                fetch('/api/heatmap-data')
+            ]).then(responses => {
+                console.log('API responses received:', responses.map(r => r.status));
+                return Promise.all(responses.map(r => r.json()));
+            }).then(([clustersData, summary, insights, economic, temporal, heatmap]) => {
+                console.log('Data received:');
+                console.log('- Clusters data:', clustersData?.length || 0);
+                console.log('- Summary:', summary?.length || 0);
+                console.log('- Insights:', insights?.length || 0);
+                console.log('- Economic:', economic?.length || 0);
+                console.log('- Temporal:', temporal?.length || 0);
+                console.log('- Heatmap:', heatmap?.length || 0);
+                
+                clusterData = clustersData;
+                updateMap(clustersData);
+                updateKeyMetrics(summary);
+                updateInsights(insights);
+                updateEconomicChart(economic);
+                updateTemporalChart(temporal);
+                updateHeatmapChart(heatmap);
+                updateClusterSummaryTable(summary);
+                createClusterLegend(clustersData);
+                createClusterToggles(clustersData);
+            }).catch(error => {
+                console.error('Error loading initial data:', error);
+                showNotification('Error loading data', 'error');
+            });
+        }
+
+        // Update map with cluster data
+        function updateMap(clustersData) {
+            // Clear existing layers
+            Object.values(clusterLayers).forEach(layer => map.removeLayer(layer));
+            clusterLayers = {};
+
+            clustersData.forEach((cluster, index) => {
+                const color = clusterColors[index % clusterColors.length];
+                const markers = [];
+
+                cluster.points.forEach(point => {
+                    const marker = L.circleMarker([point.lat, point.lng], {
+                        radius: 4,
+                        fillColor: color,
+                        color: '#ffffff',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).bindPopup(`
+                        <div style="font-family: Inter; color: #333;">
+                            <h6 style="margin: 0 0 8px 0; color: ${color};">Cluster ${cluster.cluster_id}</h6>
+                            <p style="margin: 0; font-size: 12px;">
+                                <strong>Fare:</strong> $${point.fare.toFixed(2)}<br>
+                                <strong>Passengers:</strong> ${point.passengers}<br>
+                                <strong>Hour:</strong> ${point.hour}:00<br>
+                                <strong>Season:</strong> ${point.season}
+                            </p>
+                        </div>
+                    `);
+                    markers.push(marker);
+                });
+
+                const layerGroup = L.layerGroup(markers);
+                clusterLayers[cluster.cluster_id] = layerGroup;
+                layerGroup.addTo(map);
+            });
+        }
+
+        // Update key metrics cards
+        function updateKeyMetrics(summary) {
+            const totalTrips = summary.reduce((sum, cluster) => sum + cluster.total_trips, 0);
+            const totalRevenue = summary.reduce((sum, cluster) => sum + (cluster.avg_revenue * cluster.total_trips), 0);
+            const avgPassengers = summary.reduce((sum, cluster) => sum + (cluster.avg_passengers * cluster.total_trips), 0) / totalTrips;
+            
+            animateCounter(document.getElementById('total-trips'), totalTrips);
+            animateCounter(document.getElementById('total-revenue'), totalRevenue, true);
+            animateCounter(document.getElementById('active-clusters'), summary.length);
+            animateCounter(document.getElementById('avg-passengers'), avgPassengers, false, true);
+        }
+
+        // Update insights section
+        function updateInsights(insights) {
+            const container = document.getElementById('insights-container');
+            container.innerHTML = '';
+
+            insights.forEach((insight, index) => {
+                const insightEl = document.createElement('div');
+                insightEl.className = 'insight-item mb-3 p-3';
+                insightEl.style.cssText = `
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 10px;
+                    border-left: 4px solid ${clusterColors[index % clusterColors.length]};
+                    animation: fadeInUp 0.5s ease ${index * 0.1}s both;
+                `;
+                insightEl.innerHTML = `
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <i class="fas fa-brain me-2" style="color: ${clusterColors[index % clusterColors.length]};"></i>
+                        <small style="color: var(--text-muted);">AI Insight #${index + 1}</small>
+                    </div>
+                    <p style="color: var(--text-primary); margin: 0; font-size: 0.9rem;">${insight}</p>
+                `;
+                container.appendChild(insightEl);
+            });
+        }
+
+        // Update economic analysis chart
+        function updateEconomicChart(economicData) {
+            const ctx = document.getElementById('economicChart').getContext('2d');
+            
+            if (economicChart) {
+                economicChart.destroy();
+            }
+
+            economicChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: economicData.map(d => `Cluster ${d.cluster}`),
+                    datasets: [{
+                        data: economicData.map(d => d.revenue_percentage),
+                        backgroundColor: economicData.map((_, i) => clusterColors[i % clusterColors.length]),
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#b8bcc8',
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 29, 41, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#b8bcc8',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+
+            // Update economic legend
+            const legendContainer = document.getElementById('economic-legend');
+            legendContainer.innerHTML = '';
+            economicData.forEach((item, index) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'd-flex justify-content-between align-items-center mb-2';
+                legendItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div style="width: 12px; height: 12px; background: ${clusterColors[index % clusterColors.length]}; border-radius: 50%; margin-right: 0.75rem;"></div>
+                        <span style="color: var(--text-secondary); font-size: 0.875rem;">Cluster ${item.cluster}</span>
+                    </div>
+                    <span style="color: var(--text-primary); font-weight: 600;">$${item.total_revenue.toFixed(0)}</span>
+                `;
+                legendContainer.appendChild(legendItem);
+            });
+        }
+
+        // Update temporal analysis chart
+        function updateTemporalChart(temporalData) {
+            const ctx = document.getElementById('temporalChart').getContext('2d');
+            
+            if (temporalChart) {
+                temporalChart.destroy();
+            }
+
+            // Group data by cluster
+            const clusterGroups = {};
+            temporalData.forEach(item => {
+                if (!clusterGroups[item.cluster]) {
+                    clusterGroups[item.cluster] = [];
+                }
+                clusterGroups[item.cluster].push(item);
+            });
+
+            const datasets = Object.keys(clusterGroups).map((cluster, index) => {
+                const data = Array(24).fill(0);
+                clusterGroups[cluster].forEach(item => {
+                    data[item.hour] = item.trips;
+                });
+
+                return {
+                    label: `Cluster ${cluster}`,
+                    data: data,
+                    borderColor: clusterColors[index % clusterColors.length],
+                    backgroundColor: clusterColors[index % clusterColors.length] + '20',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    hidden: false
+                };
+            });
+
+            temporalChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 29, 41, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#b8bcc8'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#6c7293'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#6c7293'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update heatmap chart - Affichage du nombre total de trajets par heure
+        function updateHeatmapChart(heatmapData) {
+            console.log('Updating heatmap chart with data:', heatmapData);
+            const ctx = document.getElementById('heatmapChart').getContext('2d');
+            
+            if (!ctx) {
+                console.error('Heatmap canvas not found!');
+                return;
+            }
+            
+            if (heatmapChart) {
+                heatmapChart.destroy();
+            }
+
+            if (!heatmapData || heatmapData.length === 0) {
+                console.warn('No heatmap data to display');
+                return;
+            }
+
+            // Agrégation des données par heure (total de tous les clusters)
+            const hourlyTotals = {};
+            for (let hour = 0; hour < 24; hour++) {
+                hourlyTotals[hour] = 0;
+            }
+            
+            heatmapData.forEach(item => {
+                hourlyTotals[item.hour] += item.trips;
+            });
+
+            const hours = Object.keys(hourlyTotals).map(h => `${h}:00`);
+            const tripCounts = Object.values(hourlyTotals);
+
+            heatmapChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hours,
+                    datasets: [{
+                        label: 'Nombre total de trajets',
+                        data: tripCounts,
+                        backgroundColor: function(context) {
+                            const value = context.parsed.y;
+                            const max = Math.max(...tripCounts);
+                            const intensity = value / max;
+                            return `rgba(250, 112, 154, ${0.3 + intensity * 0.7})`;
+                        },
+                        borderColor: '#fa709a',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#b8bcc8'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 29, 41, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#b8bcc8',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y} trajets à ${context.label}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Heure de la journée',
+                                color: '#b8bcc8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#6c7293',
+                                maxTicksLimit: 12
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Nombre de trajets',
+                                color: '#b8bcc8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#6c7293'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update cluster summary table
+        function updateClusterSummaryTable(summary) {
+            console.log('Updating cluster summary table with data:', summary);
+            const tbody = document.getElementById('cluster-summary-tbody');
+            if (!tbody) {
+                console.error('Table tbody not found!');
+                return;
+            }
+            tbody.innerHTML = '';
+
+            if (!summary || summary.length === 0) {
+                console.warn('No summary data to display');
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No data available</td></tr>';
+                return;
+            }
+
+            summary.forEach((cluster, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="cluster-indicator">
+                            <div class="cluster-badge" style="background: ${clusterColors[index % clusterColors.length]};">
+                                <i class="fas fa-layer-group me-2"></i>
+                                Cluster ${cluster.cluster_id}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="trips-cell">
+                        <i class="fas fa-route me-2"></i>
+                        ${cluster.total_trips.toLocaleString()}
+                    </td>
+                    <td class="revenue-cell">
+                        <i class="fas fa-dollar-sign me-2"></i>
+                        ${cluster.avg_revenue.toFixed(2)}
+                    </td>
+                    <td class="passengers-cell">
+                        <i class="fas fa-user me-2"></i>
+                        ${cluster.avg_passengers.toFixed(1)}
+                    </td>
+                    <td class="time-cell">
+                        <i class="fas fa-clock me-2"></i>
+                        ${cluster.peak_hour}:00
+                    </td>
+                    <td class="day-cell">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        ${getDayName(cluster.most_active_day)}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Create cluster legend in sidebar
+        function createClusterLegend(clustersData) {
+            const container = document.getElementById('cluster-legend-content');
+            container.innerHTML = '';
+
+            clustersData.forEach((cluster, index) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'd-flex align-items-center justify-content-between mb-2';
+                legendItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div style="width: 12px; height: 12px; background: ${clusterColors[index % clusterColors.length]}; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <small>Cluster ${cluster.cluster_id}</small>
+                    </div>
+                    <small>${cluster.points.length} points</small>
+                `;
+                container.appendChild(legendItem);
+            });
+        }
+
+        // Create cluster toggles for temporal chart
+        function createClusterToggles(clustersData) {
+            const container = document.getElementById('cluster-toggles');
+            container.innerHTML = '';
+
+            clustersData.forEach((cluster, index) => {
+                const toggle = document.createElement('button');
+                toggle.className = 'btn btn-sm me-1 mb-1';
+                toggle.style.cssText = `
+                    background: ${clusterColors[index % clusterColors.length]};
+                    color: white;
+                    border: none;
+                    padding: 2px 8px;
+                    font-size: 0.75rem;
+                `;
+                toggle.innerHTML = `C${cluster.cluster_id}`;
+                toggle.onclick = () => toggleClusterInChart(index);
+                container.appendChild(toggle);
+            });
+        }
+
+        // Event listeners setup
+        function setupEventListeners() {
+            // Filter dropdowns
+          document.getElementById('hour-filter').addEventListener('click', (event) => {
+            const link = event.target.closest('a[data-hour]');
+            if (!link) return;
+            event.preventDefault();
+            currentFilters.hour = link.dataset.hour;
+            document.getElementById('hour-filter-text').textContent = link.textContent;
+        });
+
+            document.querySelectorAll('#day-filter a').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    currentFilters.day = this.dataset.day;
+                    document.getElementById('day-filter-text').textContent = this.textContent;
+                });
+            });
+
+            document.querySelectorAll('#season-filter a').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    currentFilters.season = this.dataset.season;
+                    document.getElementById('season-filter-text').textContent = this.textContent;
+                });
+            });
+
+            // Prediction form
+            document.getElementById('prediction-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const lat = document.getElementById('lat-input').value;
+                const lng = document.getElementById('lng-input').value;
+                predictLocation(parseFloat(lat), parseFloat(lng));
+            });
+
+            // Stats cards hover effect
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px)';
+                    this.style.transition = 'all 0.3s ease';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        }
+
+        // Utility functions
+        function populateHourFilter() {
+            const hourFilter = document.getElementById('hour-filter');
+            for (let i = 0; i < 24; i++) {
+                const item = document.createElement('li');
+                item.innerHTML = `<a class="dropdown-item" href="#" data-hour="${i}">${i}:00</a>`;
+                hourFilter.appendChild(item);
+            }
+        }
+
+        function animateCounter(element, target, isCurrency = false, isDecimal = false) {
+            let current = 0;
+            const increment = target / 100;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                
+                if (isCurrency) {
+                    element.textContent = '$' + Math.floor(current).toLocaleString();
+                } else if (isDecimal) {
+                    element.textContent = current.toFixed(1);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 20);
+        }
+
+        function getDayName(day) {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            return days[day] || 'Unknown';
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; animation: slideInRight 0.3s ease;';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // API interaction functions
+        function applyFilters() {
+            const params = new URLSearchParams();
+            if (currentFilters.hour) params.append('hour', currentFilters.hour);
+            if (currentFilters.day) params.append('day', currentFilters.day);
+            if (currentFilters.season) params.append('season', currentFilters.season);
+
+            fetch(`/api/filtered-data?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                     updateKeyMetrics(data.summary);
+                    updateMap(data.clusters_data);
+                    updateClusterSummaryTable(data.summary);
+                    updateInsights(data.insights);
+                    showNotification('Filters applied successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error applying filters:', error);
+                    showNotification('Error applying filters', 'error');
+                });
+        }
+
+        function predictLocation(lat, lng) {
+            // Validation côté client
+            if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+                showNotification('Please enter valid coordinates', 'error');
+                return;
+            }
+            
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                showNotification('Coordinates out of valid range', 'error');
+                return;
+            }
+            
+            // Afficher un indicateur de chargement
+            showNotification('Predicting cluster...', 'info');
+            
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    latitude: parseFloat(lat),
+                    longitude: parseFloat(lng)
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const clusterId = data.cluster;
+                const resultDiv = document.getElementById('prediction-result');
+                const clusterColorDiv = document.getElementById('predicted-cluster-color');
+                const clusterIdSpan = document.getElementById('predicted-cluster-id');
+                
+                if (resultDiv && clusterColorDiv && clusterIdSpan) {
+                    clusterColorDiv.style.backgroundColor = clusterColors[clusterId % clusterColors.length];
+                    clusterIdSpan.textContent = clusterId;
+                    resultDiv.style.display = 'block';
+                    
+                    // Update input fields
+                    const latInput = document.getElementById('lat-input');
+                    const lngInput = document.getElementById('lng-input');
+                    if (latInput) latInput.value = lat;
+                    if (lngInput) lngInput.value = lng;
+                    
+                    showNotification(`Predicted cluster: ${clusterId}`, 'success');
+                } else {
+                    throw new Error('UI elements not found');
+                }
+            })
+            .catch(error => {
+                console.error('Error predicting cluster:', error);
+                showNotification(`Error predicting cluster: ${error.message}`, 'error');
+            });
+        }
+
+        function toggleClusterInChart(datasetIndex) {
+            if (temporalChart) {
+                const meta = temporalChart.getDatasetMeta(datasetIndex);
+                meta.hidden = !meta.hidden;
+                temporalChart.update();
+            }
+        }
+
+        function toggleClusters() {
+            const allVisible = Object.values(clusterLayers).every(layer => map.hasLayer(layer));
+            
+            Object.values(clusterLayers).forEach(layer => {
+                if (allVisible) {
+                    map.removeLayer(layer);
+                } else {
+                    map.addLayer(layer);
+                }
+            });
+        }
+
+        function refreshMap() {
+            fetch('/api/clusters-data')
+                .then(response => response.json())
+                .then(data => {
+                    updateMap(data);
+                    showNotification('Map refreshed', 'success');
+                })
+                .catch(error => {
+                    console.error('Error refreshing map:', error);
+                    showNotification('Error refreshing map', 'error');
+                });
+        }
+
+        function updateEconomicAnalysis() {
+            const params = new URLSearchParams();
+            if (currentFilters.hour) params.append('hour', currentFilters.hour);
+            if (currentFilters.day) params.append('day', currentFilters.day);
+            if (currentFilters.season) params.append('season', currentFilters.season);
+
+            fetch(`/api/economic-analysis?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateEconomicChart(data);
+                    showNotification('Economic analysis updated', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating economic analysis:', error);
+                    showNotification('Error updating economic analysis', 'error');
+                });
+        }
+
+        function updateHeatmap() {
+            const params = new URLSearchParams();
+            if (currentFilters.hour) params.append('hour', currentFilters.hour);
+            if (currentFilters.day) params.append('day', currentFilters.day);
+            if (currentFilters.season) params.append('season', currentFilters.season);
+
+            fetch(`/api/heatmap-data?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateHeatmapChart(data);
+                    showNotification('Heatmap updated', 'success');
+                })
+                .catch(error => {
+                    console.error('Error updating heatmap:', error);
+                    showNotification('Error updating heatmap', 'error');
+                });
+        }
+
+        function refreshInsights() {
+            fetch('/api/insights')
+                .then(response => response.json())
+                .then(data => {
+                    updateInsights(data);
+                    showNotification('AI insights refreshed', 'success');
+                })
+                .catch(error => {
+                    console.error('Error refreshing insights:', error);
+                    showNotification('Error refreshing insights', 'error');
+                });
+        }
+
+        function refreshClusterSummary() {
+            fetch('/api/cluster-summary')
+                .then(response => response.json())
+                .then(data => {
+                    updateClusterSummaryTable(data);
+                    showNotification('Cluster summary refreshed', 'success');
+                })
+                .catch(error => {
+                    console.error('Error refreshing cluster summary:', error);
+                    showNotification('Error refreshing cluster summary', 'error');
+                });
+        }
+
+        function exportClusterData() {
+            // Simple CSV export functionality
+            fetch('/api/cluster-summary')
+                .then(response => response.json())
+                .then(data => {
+                    const csv = convertToCSV(data);
+                    downloadCSV(csv, 'uber_cluster_summary.csv');
+                    showNotification('Data exported successfully', 'success');
+                })
+                .catch(error => {
+                    console.error('Error exporting data:', error);
+                    showNotification('Error exporting data', 'error');
+                });
+        }
+
+        function convertToCSV(data) {
+            const headers = ['Cluster ID', 'Total Trips', 'Avg Revenue', 'Avg Passengers', 'Peak Hour', 'Most Active Day'];
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    row.cluster_id,
+                    row.total_trips,
+                    row.avg_revenue.toFixed(2),
+                    row.avg_passengers.toFixed(1),
+                    row.peak_hour,
+                    row.most_active_day
+                ].join(','))
+            ].join('\n');
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
