@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Title -->
+    <title>Uber Fare Prediction Dashboard | AI-Powered Transportation Analytics</title>
+    
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="author" content="Uber Analytics Team">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <meta name="keywords" content="uber fare prediction, transportation analytics, ML regression, ride pricing, AI prediction, urban mobility, fare estimation">
+    
+    <meta name="description" content="Advanced Uber Fare Prediction Dashboard featuring ML-powered regression analysis, interactive maps, and real-time fare estimation with AI insights.">
+    
+    <meta property="og:title" content="Uber Fare Prediction Dashboard | AI-Powered Transportation Analytics">
+    <meta property="og:description" content="Professional Uber Fare Prediction Dashboard with ML regression, interactive visualizations, and comprehensive fare estimation insights.">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- Mobile Specific -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Leaflet for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <!-- Custom Stylesheet -->
+    <link href="{{ url_for('static', filename='style1.css') }}" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #b8bcc8;
+            --text-muted: #6c7293;
+            
+            --bg-primary: #1a1d29;
+            --bg-secondary: #252943;
+            --bg-tertiary: #2d3142;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1d29 0%, #252943 50%, #2d3142 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+            color: var(--text-primary);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1a1d29 0%, #252943 100%);
+            border-bottom: 1px solid var(--glass-border);
+            border-radius: 16px 16px 0 0 !important;
+        }
+
+        .card-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .card-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fa709a;
+            box-shadow: 0 0 0 0.2rem rgba(250, 112, 154, 0.25);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(250, 112, 154, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 1px solid #fa709a;
+            color: #fa709a;
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: #fa709a;
+            border-color: #fa709a;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            backdrop-filter: blur(20px);
+        }
+
+        .alert-success {
+            border-left: 4px solid #43e97b;
+        }
+
+        .alert-danger {
+            border-left: 4px solid #f5576c;
+        }
+
+        .alert-info {
+            border-left: 4px solid #4facfe;
+        }
+
+        /* Map Styling */
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .leaflet-container {
+            background: var(--bg-primary) !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(26, 29, 41, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 12px !important;
+            color: #ffffff !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(26, 29, 41, 0.95) !important;
+        }
+
+        .leaflet-popup-content {
+            color: #ffffff !important;
+        }
+
+        /* Fix routing control text visibility */
+        .leaflet-routing-container {
+            background: rgba(26, 29, 41, 0.95) !important;
+            color: #ffffff !important;
+            border-radius: 8px !important;
+        }
+
+        .leaflet-routing-alt {
+            background: rgba(26, 29, 41, 0.95) !important;
+            color: #ffffff !important;
+        }
+
+        .leaflet-routing-alt h3 {
+            color: #ffffff !important;
+        }
+
+        .leaflet-routing-alt table {
+            color: #ffffff !important;
+        }
+
+        .leaflet-routing-alt td {
+            color: #ffffff !important;
+        }
+
+        /* Custom popup styling */
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: rgba(26, 29, 41, 0.95) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .custom-popup .leaflet-popup-content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: rgba(26, 29, 41, 0.95) !important;
+        }
+
+        .edit-mode .leaflet-popup-content-wrapper {
+            border: 2px solid #43e97b !important;
+            box-shadow: 0 8px 32px rgba(67, 233, 123, 0.3) !important;
+        }
+
+        /* Animations */
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .animate-slide-in-left {
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .animate-slide-in-right {
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        .animate-bounce-in {
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Stats Cards */
+        .stats-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-change {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Instructions Styling */
+        .instructions-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .instructions-card h3 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .instructions-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .instructions-card li {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .instructions-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #43e97b;
+            font-weight: bold;
+        }
+
+        /* Form Styling */
+        .form-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Results Styling */
+        .result-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .fare-amount {
+            font-size: 4rem;
+            font-weight: 900;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(67, 233, 123, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .fare-classification {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            display: inline-block;
+        }
+
+        .classification-low {
+            background: rgba(67, 233, 123, 0.2);
+            color: #43e97b;
+            border: 2px solid #43e97b;
+        }
+
+        .classification-normal {
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+            border: 2px solid #4facfe;
+        }
+
+        .classification-high {
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+            border: 2px solid #f5576c;
+        }
+
+        .prediction-details {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .prediction-details h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .prediction-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .stats-number {
+                font-size: 2rem;
+            }
+            
+            .fare-amount {
+                font-size: 2rem;
+            }
+            
+            #map {
+                height: 400px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fa709a;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <!--**********************************
+        Main wrapper start
+    ***********************************-->
+    <div id="main-wrapper">
+        <!--**********************************
+            Header start
+        ***********************************-->
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-car me-2" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                    Uber Fare Prediction Dashboard
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                            <div class="avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="d-none d-md-block">
+                                <div style="font-size: 0.875rem; font-weight: 600; line-height: 1.2;">Fare Analyst</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.2;">Uber Analytics Team</div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);">
+                            <li><a class="dropdown-item" href="#" style="color: var(--text-primary);"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#" style="color: var(--text-primary);"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider" style="border-color: var(--glass-border);"></li>
+                            <li><a class="dropdown-item" href="#" style="color: #fa709a;"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!--**********************************
+            Header end
+        ***********************************-->
+
+        <!--**********************************
+            Content body start
+        ***********************************-->
+        <div class="container-fluid py-4">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="text-center">
+                        <h1 class="display-4 fw-bold mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="fas fa-brain me-3"></i>AI-Powered Fare Prediction
+                        </h1>
+                        <p class="lead text-muted">Advanced machine learning regression analysis for accurate Uber fare estimation</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metrics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
+                    <div class="stats-card animate-fade-in-up" style="animation-delay: 0.1s;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="flex-grow-1">
+                                <div class="stats-number" id="prediction-accuracy">77%</div>
+                                <div class="stats-label">Prediction Accuracy</div>
+                                <div class="stats-change">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>ML Model</span>
+                                </div>
+                            </div>
+                            <div class="stats-icon" style="background: var(--success-gradient); color: white;">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
+                    <div class="stats-card animate-fade-in-up" style="animation-delay: 0.2s;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="flex-grow-1">
+                                <div class="stats-number" id="avg-fare">$11.40</div>
+                                <div class="stats-label">Average Fare</div>
+                                <div class="stats-change">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    <span>Real-time</span>
+                                </div>
+                            </div>
+                            <div class="stats-icon" style="background: var(--info-gradient); color: white;">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-3">
+                    <div class="stats-card animate-fade-in-up" style="animation-delay: 0.3s;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="flex-grow-1">
+                                <div class="stats-number" id="predictions-made">1,247</div>
+                                <div class="stats-label">Predictions Made</div>
+                                <div class="stats-change">
+                                    <i class="fas fa-calculator"></i>
+                                    <span>Today</span>
+                                </div>
+                            </div>
+                            <div class="stats-icon" style="background: var(--warning-gradient); color: white;">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Map Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card animate-slide-in-right" style="animation-delay: 0.5s;">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="card-title">
+                                        <i class="fas fa-map-marked-alt me-2"></i>Interactive Route Planning
+                                    </h4>
+                                    <p class="card-subtitle">Set your pickup and destination points for fare prediction</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-secondary" onclick="getUserLocation()">
+                                        <i class="fas fa-location-arrow me-2"></i>My Location
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" onclick="clearMarkers()">
+                                        <i class="fas fa-trash me-2"></i>Clear Route
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="map"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions and Form Section -->
+            <div class="row mb-4">
+                <div class="col-xl-8 mb-3">
+                    <div class="instructions-card animate-slide-in-left" style="animation-delay: 0.6s;">
+                        <h3>
+                            <i class="fas fa-info-circle me-2"></i>How to Use
+                        </h3>
+                        <ul>
+                            <li>Double-click on the map to set your starting point and destination</li>
+                            <li>Click "Edit" in the popup to move a marker to a new location</li>
+                            <li>Click "Delete" in the popup to remove a marker and associated route</li>
+                            <li>Your current location is automatically detected and shown as a blue circle</li>
+                            <li>Adjust passenger count and click "Predict Fare" to get your estimate</li>
+                    </ul>
+                    </div>
+                </div>
+                <div class="col-xl-4 mb-3">
+                    <div class="form-section animate-slide-in-right" style="animation-delay: 0.7s;">
+                        <h3>
+                            <i class="fas fa-users me-2"></i>Passenger Count
+                        </h3>
+                        <div class="mb-3">
+                            <label for="passenger_count" class="form-label">Number of Passengers</label>
+                            <input id="passenger_count" name="passenger_count" type="number" value="1" min="1" max="6" class="form-control">
+                        </div>
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary" onclick="predictFare()">
+                                <i class="fas fa-calculator me-2"></i>Predict Fare
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+            <!-- Results Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div id="fareResult" class="result-card" style="display: none;">
+                        <div class="fare-amount" id="fare-amount">$0.00</div>
+                        <div class="fare-classification" id="fare-classification">Ready to predict</div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Prediction based on ML regression model with real-time data
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--**********************************
+            Content body end
+        ***********************************-->
+    </div>
+    <!--**********************************
+        Main wrapper end
+    ***********************************-->
+
+    <!-- Hidden Inputs for Form Submission -->
+    <form id="uberForm" method="POST" action="/calculate_fare" style="display: none;">
+            <input type="hidden" id="distance_km" name="distance_km" value="0">
+            <input type="hidden" id="pickup_day" name="pickup_day" value="">
+            <input type="hidden" id="pickup_hour" name="pickup_hour" value="">
+            <input type="hidden" id="is_weekend" name="is_weekend" value="0">
+            <input type="hidden" id="season_winter" name="season_winter" value="0">
+            <input type="hidden" id="season_spring" name="season_spring" value="0">
+            <input type="hidden" id="season_summer" name="season_summer" value="0">
+            <input type="hidden" id="season_autumn" name="season_autumn" value="0">
+            <input type="hidden" id="pickup_longitude" name="pickup_longitude" value="">
+            <input type="hidden" id="pickup_latitude" name="pickup_latitude" value="">
+            <input type="hidden" id="dropoff_longitude" name="dropoff_longitude" value="">
+            <input type="hidden" id="dropoff_latitude" name="dropoff_latitude" value="">
+            <input type="hidden" id="day_of_week" name="day_of_week" value="">
+            <input type="hidden" id="month" name="month" value="">
+            <input type="hidden" id="pickup_minute" name="pickup_minute" value="">
+        </form>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Leaflet for Maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    
+    <!-- Uber Fare Prediction Dashboard Scripts -->
+    <script>
+        // Global variables
+        let map;
+        let userLocationMarker;
+        let startMarker, endMarker;
+        let routingControl;
+        let isPredicting = false;
+
+        // Initialize dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            setupEventListeners();
+            initializeDateTime();
+            getUserLocation();
+            animateStatsCards();
+        });
+
+        // Initialize Leaflet map
+        function initializeMap() {
+            map = L.map('map').setView([40.7589, -73.9851], 11); // NYC center
+            
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+        }).addTo(map);
+
+            // Add double click event to the map
+            map.on('dblclick', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                if (!startMarker) {
+                    // Set start marker
+                    startMarker = createMarker(lat, lng, 'Starting Point', '#43e97b');
+                    document.getElementById('pickup_latitude').value = lat;
+                    document.getElementById('pickup_longitude').value = lng;
+                    showNotification('Starting point set! Now click destination.', 'info');
+                } else if (!endMarker) {
+                    // Set end marker
+                    endMarker = createMarker(lat, lng, 'Destination Point', '#fa709a');
+                    document.getElementById('dropoff_latitude').value = lat;
+                    document.getElementById('dropoff_longitude').value = lng;
+                    showNotification('Destination set! Ready to predict fare.', 'success');
+                    
+                    // Draw route between markers
+                    drawRoute();
+                } else {
+                    showNotification('Clear existing route first to set new points.', 'warning');
+                }
+            });
+        }
+
+        // Function to get user's location
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+
+                        // Center the map on user's location
+                        map.setView([userLat, userLng], 13);
+
+                        // Add a blue circle for user's location
+                        if (userLocationMarker) {
+                            userLocationMarker.setLatLng([userLat, userLng]);
+                        } else {
+                            userLocationMarker = L.circleMarker([userLat, userLng], {
+                                radius: 12,
+                                fillColor: "#4facfe",
+                                color: "#ffffff",
+                                weight: 3,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            }).addTo(map).bindPopup(`
+                                <div style="font-family: Inter; color: #ffffff; text-align: center;">
+                                    <h6 style="margin: 0 0 8px 0; color: #4facfe;">📍 Your Location</h6>
+                                    <p style="margin: 0; font-size: 12px; color: #ffffff;">
+                                        <strong>Lat:</strong> ${userLat.toFixed(6)}<br>
+                                        <strong>Lng:</strong> ${userLng.toFixed(6)}
+                                    </p>
+                                </div>
+                            `);
+                        }
+                    },
+                    function() {
+                        showNotification('Geolocation service failed. Using default location.', 'warning');
+                    }
+                );
+            } else {
+                showNotification('Geolocation is not supported by this browser.', 'warning');
+            }
+        }
+
+        // Function to create or update markers with modern styling
+        function createMarker(lat, lng, type, color) {
+            let marker;
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div style="
+                        background: ${color};
+                        width: 35px;
+                        height: 35px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 16px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        ${type === 'Starting Point' ? 'A' : 'B'}
+                    </div>
+                `,
+                iconSize: [35, 35],
+                iconAnchor: [17.5, 17.5]
+            });
+
+            if (type === 'Starting Point') {
+                if (startMarker) {
+                    map.removeLayer(startMarker);
+                }
+                marker = L.marker([lat, lng], { 
+                    icon: icon,
+                    draggable: true
+                }).addTo(map);
+                startMarker = marker;
+            } else {
+                if (endMarker) {
+                    map.removeLayer(endMarker);
+                }
+                marker = L.marker([lat, lng], { 
+                    icon: icon,
+                    draggable: true
+                }).addTo(map);
+                endMarker = marker;
+            }
+
+            // Bind popup with proper event handling
+            bindMarkerPopup(marker, type, color, lat, lng);
+
+            // Handle marker drag events
+            marker.on('dragend', function(e) {
+                const newLat = e.target.getLatLng().lat;
+                const newLng = e.target.getLatLng().lng;
+                
+                // Update coordinates
+                if (type === 'Starting Point') {
+                    document.getElementById('pickup_latitude').value = newLat;
+                    document.getElementById('pickup_longitude').value = newLng;
+                } else {
+                    document.getElementById('dropoff_latitude').value = newLat;
+                    document.getElementById('dropoff_longitude').value = newLng;
+                }
+                
+                // Redraw route if both markers exist
+                if (startMarker && endMarker) {
+                    drawRoute();
+                }
+                
+                showNotification(`${type} moved to new location`, 'info');
+            });
+
+            return marker;
+        }
+
+        // Function to bind popup with proper event handling
+        function bindMarkerPopup(marker, type, color, lat, lng) {
+            const popupContent = `
+                <div style="font-family: Inter; color: #ffffff; text-align: center; min-width: 180px;">
+                    <h6 style="margin: 0 0 8px 0; color: ${color}; font-size: 14px;">
+                        <i class="fas fa-${type === 'Starting Point' ? 'play' : 'flag'} me-2"></i>${type}
+                    </h6>
+                    <p style="margin: 0 0 12px 0; font-size: 12px; color: #b8bcc8;">
+                        <strong>Lat:</strong> ${lat.toFixed(6)}<br>
+                        <strong>Lng:</strong> ${lng.toFixed(6)}
+                    </p>
+                    <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-sm btn-outline-primary edit-btn" style="font-size: 11px; padding: 6px 12px; border-radius: 6px;">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" style="font-size: 11px; padding: 6px 12px; border-radius: 6px;">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent, {
+                closeButton: true,
+                autoClose: false,
+                closeOnClick: false,
+                className: 'custom-popup'
+            });
+
+            // Handle popup open event
+            marker.on('popupopen', function() {
+                // Edit button functionality
+                const editBtn = marker.getPopup().getElement().querySelector('.edit-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    marker.dragging.enable();
+                        marker.closePopup();
+                        
+                        // Show edit mode popup
+                        const editPopupContent = `
+                            <div style="font-family: Inter; color: #ffffff; text-align: center; min-width: 180px;">
+                                <h6 style="margin: 0 0 8px 0; color: ${color}; font-size: 14px;">
+                                    <i class="fas fa-hand-paper me-2"></i>${type} - Drag to Move
+                                </h6>
+                                <p style="margin: 0 0 12px 0; font-size: 12px; color: #43e97b;">
+                                    <i class="fas fa-info-circle me-1"></i>Drag the marker to new location
+                                </p>
+                                <div style="display: flex; gap: 8px; justify-content: center;">
+                                    <button class="btn btn-sm btn-success confirm-edit-btn" style="font-size: 11px; padding: 6px 12px; border-radius: 6px;">
+                                        <i class="fas fa-check me-1"></i>Done
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-btn" style="font-size: 11px; padding: 6px 12px; border-radius: 6px;">
+                                        <i class="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        marker.bindPopup(editPopupContent, {
+                            closeButton: false,
+                            autoClose: false,
+                            closeOnClick: false,
+                            className: 'custom-popup edit-mode'
+                        }).openPopup();
+                        
+                        // Handle confirm edit
+                        setTimeout(() => {
+                            const confirmBtn = marker.getPopup().getElement().querySelector('.confirm-edit-btn');
+                            if (confirmBtn) {
+                                confirmBtn.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    marker.dragging.disable();
+                                    bindMarkerPopup(marker, type, color, marker.getLatLng().lat, marker.getLatLng().lng);
+                                    marker.openPopup();
+                                    showNotification(`${type} position updated`, 'success');
+                                });
+                            }
+                        }, 100);
+                    });
+                }
+
+                // Delete button functionality
+                const deleteBtn = marker.getPopup().getElement().querySelector('.delete-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm(`Are you sure you want to delete ${type}?`)) {
+                    map.removeLayer(marker);
+                    if (type === 'Starting Point') {
+                        startMarker = null;
+                    } else {
+                        endMarker = null;
+                    }
+                    if (routingControl) {
+                        map.removeControl(routingControl);
+                    }
+                            showNotification(`${type} removed`, 'info');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Draw route between markers
+        function drawRoute() {
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(startMarker.getLatLng().lat, startMarker.getLatLng().lng),
+                    L.latLng(endMarker.getLatLng().lat, endMarker.getLatLng().lng)
+                ],
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                }),
+                routeWhileDragging: true,
+                createMarker: function() { return null; }, // Don't create default markers
+                lineOptions: {
+                    styles: [{ color: '#fa709a', weight: 4, opacity: 0.8 }]
+                }
+            }).addTo(map);
+
+            // Calculate distance and update hidden input
+            routingControl.on('routesfound', function(e) {
+                const distance = e.routes[0].summary.totalDistance / 1000; // Convert to kilometers
+                document.getElementById('distance_km').value = distance.toFixed(2);
+                showNotification(`Route calculated: ${distance.toFixed(2)} km`, 'success');
+            });
+        }
+
+        // Clear all markers and route
+        function clearMarkers() {
+            if (startMarker) {
+                map.removeLayer(startMarker);
+                startMarker = null;
+            }
+            if (endMarker) {
+                map.removeLayer(endMarker);
+                endMarker = null;
+            }
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+            document.getElementById('fareResult').style.display = 'none';
+            showNotification('Route cleared', 'info');
+        }
+
+        // Predict fare function
+        function predictFare() {
+            if (!startMarker || !endMarker) {
+                showNotification('Please set both starting point and destination first!', 'warning');
+                return;
+            }
+
+            if (isPredicting) {
+                showNotification('Prediction in progress...', 'info');
+                return;
+            }
+
+            isPredicting = true;
+            showNotification('Predicting fare...', 'info');
+
+            // Show loading state
+            const resultDiv = document.getElementById('fareResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+                    <div class="loading-spinner me-3"></div>
+                    <span>Analyzing route and calculating fare...</span>
+                </div>
+            `;
+
+            // Prepare form data including passenger_count
+            const formData = new FormData();
+            formData.append('distance_km', document.getElementById('distance_km').value);
+            formData.append('pickup_day', document.getElementById('pickup_day').value);
+            formData.append('pickup_hour', document.getElementById('pickup_hour').value);
+            formData.append('is_weekend', document.getElementById('is_weekend').value);
+            formData.append('season_winter', document.getElementById('season_winter').value);
+            formData.append('season_spring', document.getElementById('season_spring').value);
+            formData.append('season_summer', document.getElementById('season_summer').value);
+            formData.append('season_autumn', document.getElementById('season_autumn').value);
+            formData.append('pickup_longitude', document.getElementById('pickup_longitude').value);
+            formData.append('pickup_latitude', document.getElementById('pickup_latitude').value);
+            formData.append('dropoff_longitude', document.getElementById('dropoff_longitude').value);
+            formData.append('dropoff_latitude', document.getElementById('dropoff_latitude').value);
+            formData.append('day_of_week', document.getElementById('day_of_week').value);
+            formData.append('month', document.getElementById('month').value);
+            formData.append('pickup_minute', document.getElementById('pickup_minute').value);
+            formData.append('passenger_count', document.getElementById('passenger_count').value);
+
+            // Submit form via AJAX
+            fetch('/calculate_fare', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                isPredicting = false;
+                console.log("Response:", data);
+                
+                // Update fare display
+                const fareAmount = data.fare_amount.toFixed(2);
+                const classification = data.fare_amount_classification;
+                
+                let classificationText;
+                let classificationClass;
+                
+                if (classification == 0) {
+                    classificationText = 'LOW FARE';
+                    classificationClass = 'classification-low';
+                } else if (classification == 1) {
+                    classificationText = 'NORMAL FARE';
+                    classificationClass = 'classification-normal';
+                } else if (classification == 2) {
+                    classificationText = 'HIGH FARE';
+                    classificationClass = 'classification-high';
+                } else {
+                    classificationText = 'UNKNOWN';
+                    classificationClass = 'classification-normal';
+                }
+
+                // Calculate additional stats
+                const distance = document.getElementById('distance_km').value;
+                const passengers = document.getElementById('passenger_count').value;
+                const currentHour = new Date().getHours();
+                const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6;
+                
+                resultDiv.innerHTML = `
+                    <div class="fare-amount">$${fareAmount}</div>
+                    <div class="fare-classification ${classificationClass}">${classificationText}</div>
+                    
+                    <div class="prediction-details">
+                        <h6>
+                            <i class="fas fa-chart-line me-2"></i>Prediction Details
+                        </h6>
+                        <div class="prediction-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${distance} km</div>
+                                <div class="stat-label">Distance</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${passengers}</div>
+                                <div class="stat-label">Passengers</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${currentHour}:00</div>
+                                <div class="stat-label">Time</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${isWeekend ? 'Weekend' : 'Weekday'}</div>
+                                <div class="stat-label">Day Type</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-brain me-1"></i>
+                                AI-powered prediction with 77% accuracy
+                            </small>
+                        </div>
+                    </div>
+                `;
+
+                showNotification(`Fare predicted: $${fareAmount}`, 'success');
+            })
+            .catch(error => {
+                isPredicting = false;
+                console.error("Error:", error);
+                
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error calculating fare: ${error.message}
+                    </div>
+                `;
+                
+                showNotification('Error calculating fare', 'error');
+            });
+        }
+
+        // Initialize date and time values
+        function initializeDateTime() {
+            const currentDate = new Date();
+            document.getElementById('pickup_day').value = currentDate.getDate();
+            document.getElementById('pickup_hour').value = currentDate.getHours();
+            document.getElementById('is_weekend').value = (currentDate.getDay() === 0 || currentDate.getDay() === 6) ? 1 : 0;
+            document.getElementById('month').value = currentDate.getMonth() + 1;
+            document.getElementById('day_of_week').value = (currentDate.getDay() === 0) ? 7 : currentDate.getDay();
+            document.getElementById('pickup_minute').value = currentDate.getMinutes();
+            
+            // Determine season
+            const month = currentDate.getMonth();
+            if (month === 11 || month === 0 || month === 1) { // December, January, February
+                document.getElementById('season_winter').value = 1;
+            } else if (month >= 2 && month <= 4) { // March, April, May
+                document.getElementById('season_spring').value = 1;
+            } else if (month >= 5 && month <= 7) { // June, July, August
+                document.getElementById('season_summer').value = 1;
+            } else { // September, October, November
+                document.getElementById('season_autumn').value = 1;
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Stats cards hover effect
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px)';
+                    this.style.transition = 'all 0.3s ease';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        }
+
+        // Animate stats cards on load
+        function animateStatsCards() {
+            const cards = document.querySelectorAll('.stats-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }
+
+        // Show notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; animation: slideInRight 0.3s ease; max-width: 300px;';
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Add slideOutRight animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

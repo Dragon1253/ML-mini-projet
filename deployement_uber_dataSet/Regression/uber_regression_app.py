@@ -14,7 +14,7 @@ model_classification = joblib.load('model_classification.pkl')
 
 @app.route('/')
 def home():
-    return render_template('dashboard.html')
+    return render_template('dashboard1.html')
 
 @app.route('/calculate_fare', methods=['POST'])
 def calculate_fare():
